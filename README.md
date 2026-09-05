@@ -14,12 +14,12 @@ Without MCP, an application usually needs a different integration for every
 tool or service. With MCP, a server registers capabilities and an MCP client
 discovers and uses them through the protocol.
 
-![MCP replaces many tool-specific APIs with one client/server protocol](image1.png)
+![MCP replaces many tool-specific APIs with one client/server protocol](./images/image1.png)
 
 The basic flow in this repository is:
 
 
-![Agent, client, transport, and server request flow](image2.png)
+![Agent, client, transport, and server request flow](./images/image2.png)
 
 An MCP server can expose three important kinds of capabilities:
 
@@ -69,6 +69,59 @@ when to call `add` and then explain the result.
 The agent receives one unified tool collection even though the tools come from
 different servers and transports.
 
+
+### MCP capabilities and initialization
+
+![MCP logging, progress reporting, and user elicitation](images/image3.png)
+
+This diagram shows three ways an MCP server can keep the client informed while
+an operation is running:
+
+- **Logging** sends informational or error messages, such as `Success!` or
+	`Crashed`.
+- **Progress reporting** tells the client how much work is complete.
+- **User elicitation** asks the user for information when the server needs a
+	decision or an input value.
+## initialization handshake
+![MCP client and server capability negotiation](images/image4.png)
+
+When a client connects, both sides perform an initialization handshake. The
+client declares the features it supports, the server declares its features,
+and both agree on the feature set that can be used for that connection. This
+is why a client can safely discover whether tools, resources, prompts, logging,
+or other optional features are available.
+
+## The three main MCP primitives
+
+![MCP tools, resources, and prompts](images/image5.png)
+
+
+- **Tools** are actions, such as reading a file, querying a database, or
+	calling an API.
+- **Resources** are data that a client can read, such as a file, database
+	record, or system metric.
+- **Prompts** are reusable message templates that help an application prepare
+	a request for an LLM.
+
+### Transport choices
+
+![MCP stdio communication](images/image6.png)
+
+With stdio, the client starts the MCP server as a local subprocess. JSON-RPC
+requests travel through `stdin`, responses travel through `stdout`, and logs
+and errors belong on `stderr`. Keeping logs on `stderr` prevents them from
+being mixed with protocol messages on `stdout`.
+
+## Filesystem safety
+
+![MCP declared roots and allowed filesystem access](images/image11.png)
+
+Roots let a client declare which filesystem locations the server may use. In
+the diagram, `/home/user/projects` is allowed, while locations such as
+`/var/`, `/etc/`, and `/home/user/.ssh/` are blocked. This limits file access
+to the intended project area and is especially important for servers that
+read, create, or delete files.
+
 ## Enhanced MCP server
 
 The `enhanced-mcp-server` directory is a more complete example. Its server is a
@@ -93,7 +146,6 @@ file-operations MCP server with the following capabilities:
 - `documentation_generator(ctx)` uses elicitation to ask for a source file and
 	documentation filename, then creates a documentation-generation prompt.
 
-![Logging, progress reporting, and user elicitation](image.png)
 
 The enhanced client (`enhanced-mcp-server/client.py`) demonstrates more of the
 MCP lifecycle:
